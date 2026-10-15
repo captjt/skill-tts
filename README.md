@@ -89,15 +89,17 @@ tts doctor                                               # audio output, provide
 
 ## Providers
 
-| Provider | Where it runs | Setup |
-|---|---|---|
-| `system` (default) | your machine, offline | none on macOS (`say`). On Linux: `apt install espeak-ng` |
-| `kokoro` | your machine | `docker run -d --name kokoro -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0` |
-| `openai` | cloud | `OPENAI_API_KEY` |
-| `elevenlabs` | cloud | `ELEVENLABS_API_KEY` |
-| `gemini` | cloud | `GEMINI_API_KEY` |
-| `cartesia` | cloud | `CARTESIA_API_KEY` |
-| `deepgram` | cloud | `DEEPGRAM_API_KEY` |
+| Provider | Where it runs | Setup | Status |
+|---|---|---|---|
+| `system` (default) | your machine, offline | none on macOS (`say`). On Linux: `apt install espeak-ng` | ✅ tested live |
+| `kokoro` | your machine | `docker run -d --name kokoro -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0` | ✅ tested live |
+| `openai` | cloud | `OPENAI_API_KEY` | ⚠️ not yet tested live |
+| `elevenlabs` | cloud | `ELEVENLABS_API_KEY` | ⚠️ not yet tested live |
+| `gemini` | cloud | `GEMINI_API_KEY` | ⚠️ not yet tested live |
+| `cartesia` | cloud | `CARTESIA_API_KEY` | ⚠️ not yet tested live |
+| `deepgram` | cloud | `DEEPGRAM_API_KEY` | ⚠️ not yet tested live |
+
+> **Testing status (v0.1.0).** `system` and `kokoro` have been run end to end: live playback, file output, and `tts render`. The cloud providers have **not yet been run against their live APIs**. Their request and response handling was written from each provider's API docs (October 2026) and is unit-tested against fake servers that mimic those docs. Real APIs can still differ in ways the docs don't show. Gemini is the most likely to need a fix, because its TTS recently moved to the new Interactions API. If one fails with an error about the request itself, such as an unknown field, a bad parameter, or an unexpected response, please [open an issue](https://github.com/captjt/skill-tts/issues) with the error text.
 
 Pick a default and its voice:
 
@@ -174,6 +176,7 @@ Claude Code [hooks](https://code.claude.com/docs/en/hooks) can speak when Claude
 | Audio output | CoreAudio, in-process | PulseAudio/PipeWire or ALSA, in-process. Falls back to ffplay, mpv, paplay, aplay, or sox |
 | System voice | `say` | `espeak-ng` |
 | Keyring | Keychain | Secret Service (`secret-tool`) |
+| Tested | playback, files, render (Apple Silicon) | files and render in a Debian container. Playback on real audio hardware not yet tested |
 | Architectures | arm64, amd64 | arm64, amd64 |
 
 Without an audio device (SSH sessions, containers), use `--out file.wav`.

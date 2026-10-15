@@ -114,6 +114,7 @@ When speaking:
 - `tts providers` and `tts voices -p NAME [filter]` list providers and voices.
 - `tts config set KEY VALUE` sets defaults. Keys are `provider`, `voiceover_provider`, `max_chars`, and `NAME.voice|model|speed|instructions|base_url`.
 - **Missing API key:** tell the user to set the env var (e.g. `ELEVENLABS_API_KEY`) or run `tts auth set elevenlabs` **in their own terminal**. Never ask the user to paste a key into the chat, and never put one on a command line.
+- **Untested cloud providers:** `openai`, `elevenlabs`, `gemini`, `cartesia`, and `deepgram` haven't been tested against their live APIs yet. Only `system` and `kokoro` have. If one of them fails with an error about the request itself (an unknown field, invalid parameter, or unexpected response), it's probably a bug in this skill, not something the user did. Show the user the exact error, suggest reporting it at github.com/captjt/skill-tts/issues, and offer `kokoro` or `system` as a fallback. Don't keep retrying with guessed parameters. Auth (401/403) and quota (429) errors are the user's to fix as usual.
 - **Kokoro not reachable:** start it with `docker run -d --name kokoro -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0`.
 - **No audio device** (SSH, containers): use `render` or `-o`; they don't need speakers.
 
