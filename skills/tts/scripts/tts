@@ -1,0 +1,106 @@
+#!/bin/sh
+# Launcher for the skill-tts agent skill.
+#
+# Runs the `tts` binary for this machine. On first use it downloads the
+# release binary pinned below from GitHub Releases and refuses to run it unless
+# its SHA-256 matches. Nothing else is downloaded or executed.
+#
+# Release binaries are reproducible: `make verify-pins` rebuilds them
+# byte-for-byte from ../src, and the release workflow refuses to publish
+# binaries that don't match these pins.
+#
+#   TTS_BUILD_FROM_SOURCE=1   build from ../src with your own Go toolchain instead
+#   TTS_BIN=/path/to/tts      use a specific binary
+set -eu
+
+VERSION=0.1.0
+REPO=captjt/skill-tts
+SHA256_darwin_arm64=d7b06ed5561e0b172ebddd4acdeadb6e79d2ac521cede1f1377ba373999e3783
+SHA256_darwin_amd64=4a1f25fbe535379d61452c5061007b285470a51e2a6737d327f520f7382fb6df
+SHA256_linux_arm64=66079fd3cb5a249b501528c29b3ee6b15c067b704205e86e92420f9b68a0b3d9
+SHA256_linux_amd64=6fb23c2c9064bdf0840fb4161303666e1b243ba269e6fb9efbdf0495a0cf0e18
+
+die() {
+	printf 'tts: %s\n' "$*" >&2
+	exit 1
+}
+note() { printf 'tts: %s\n' "$*" >&2; }
+
+if [ -n "${TTS_BIN:-}" ]; then exec "$TTS_BIN" "$@"; fi
+
+case $(uname -s) in
+Darwin) os=darwin ;;
+Linux) os=linux ;;
+*) die "unsupported OS: $(uname -s)" ;;
+esac
+case $(uname -m) in
+arm64 | aarch64) arch=arm64 ;;
+x86_64 | amd64) arch=amd64 ;;
+*) die "unsupported CPU: $(uname -m)" ;;
+esac
+case $os-$arch in
+darwin-arm64) want=$SHA256_darwin_arm64 ;;
+darwin-amd64) want=$SHA256_darwin_amd64 ;;
+linux-arm64) want=$SHA256_linux_arm64 ;;
+linux-amd64) want=$SHA256_linux_amd64 ;;
+esac
+cache=${XDG_CACHE_HOME:-$HOME/.cache}/skill-tts/bin
+
+build_from_source() {
+	command -v go >/dev/null 2>&1 || die "building from source needs Go (https://go.dev/dl/)"
+	src=$(CDPATH='' cd -- "$(dirname -- "$0")/../src" && pwd -P)
+	bin=$cache/tts-src-$(printf %s "$src" | cksum | cut -d' ' -f1)
+	# Rebuild whenever a source file is newer than the binary.
+	if [ ! -x "$bin" ] || [ -n "$(find "$src" -newer "$bin" \( -name '*.go' -o -name go.mod -o -name go.sum \) | head -n 1)" ]; then
+		note "building tts from $src ..."
+		mkdir -p "$cache"
+		(cd "$src" && CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=$VERSION-src" -o "$bin.tmp" .) ||
+			die "build failed"
+		mv -f "$bin.tmp" "$bin"
+	fi
+	exec "$bin" "$@"
+}
+
+if [ "${TTS_BUILD_FROM_SOURCE:-}" = 1 ] || [ -z "$want" ]; then
+	build_from_source "$@"
+fi
+
+# Fast path: the verified binary is already cached.
+bin=$cache/tts-$VERSION-$os-$arch-$(printf %.16s "$want")
+if [ -x "$bin" ]; then exec "$bin" "$@"; fi
+
+sha256() {
+	if command -v sha256sum >/dev/null 2>&1; then
+		sha256sum "$1"
+	elif command -v shasum >/dev/null 2>&1; then
+		shasum -a 256 "$1"
+	else
+		openssl dgst -sha256 -r "$1"
+	fi | cut -d' ' -f1
+}
+
+url=https://github.com/$REPO/releases/download/v$VERSION/tts-$os-$arch
+note "downloading tts v$VERSION for $os/$arch (first run only) ..."
+mkdir -p "$cache"
+tmp=$(mktemp "$cache/.download.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+if command -v curl >/dev/null 2>&1; then
+	curl -fsSL --proto '=https' --tlsv1.2 --retry 2 -o "$tmp" "$url" || fetched=no
+else
+	wget -q --https-only -O "$tmp" "$url" || fetched=no
+fi
+if [ "${fetched:-yes}" = no ]; then
+	rm -f "$tmp"
+	if command -v go >/dev/null 2>&1; then
+		note "download failed; building from source instead"
+		build_from_source "$@"
+	fi
+	die "download failed: $url"
+fi
+got=$(sha256 "$tmp")
+[ "$got" = "$want" ] || die "checksum mismatch for $url: expected $want, got $got. Refusing to run it."
+chmod 755 "$tmp"
+mv -f "$tmp" "$bin"
+trap - EXIT
+note "verified sha256 $got"
+exec "$bin" "$@"

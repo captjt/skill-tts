@@ -1,0 +1,10 @@
+{
+  "name": "tts",
+  "version": "0.1.0",
+  "description": "Text to speech for Claude Code: render timed voiceovers for videos, speak summaries and notifications, or write audio files with system voices, local Kokoro, OpenAI, ElevenLabs, Gemini, Cartesia, or Deepgram.",
+  "author": { "name": "Jordan Taylor", "url": "https://github.com/captjt" },
+  "homepage": "https://github.com/captjt/skill-tts",
+  "repository": "https://github.com/captjt/skill-tts",
+  "license": "MIT",
+  "keywords": ["tts", "text-to-speech", "voice", "audio", "kokoro", "elevenlabs", "openai", "gemini"]
+}

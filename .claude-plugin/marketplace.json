@@ -1,0 +1,12 @@
+{
+  "name": "skill-tts",
+  "owner": { "name": "Jordan Taylor", "url": "https://github.com/captjt" },
+  "description": "Text-to-speech skill for coding agents: fast, streaming, multi-provider, verifiable.",
+  "plugins": [
+    {
+      "name": "tts",
+      "source": "./",
+      "description": "Text to speech: speak summaries and notifications or write audio files with system voices, local Kokoro, OpenAI, ElevenLabs, Gemini, Cartesia, or Deepgram."
+    }
+  ]
+}
