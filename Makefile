@@ -11,7 +11,7 @@ TARGETS    := darwin-arm64 darwin-amd64 linux-arm64 linux-amd64
 LDFLAGS    := -s -w -buildid= -X main.version=$(VERSION)
 GOBUILD    := GOTOOLCHAIN=go$(GO_VERSION) CGO_ENABLED=0 go -C $(SRC) build -trimpath -buildvcs=false -mod=readonly -ldflags '$(LDFLAGS)'
 
-.PHONY: build test lint dist checksums pin verify-pins clean
+.PHONY: build test lint dist checksums pin verify-pins clean social-preview
 
 build: ## build for this machine into dist/tts
 	$(GOBUILD) -o $(CURDIR)/dist/tts .
@@ -52,6 +52,12 @@ verify-pins: checksums
 		if [ "$$want" = "$$got" ]; then echo "ok        tts-$$t $$got"; \
 		else echo "MISMATCH  tts-$$t pinned=$$want built=$$got"; fail=1; fi; \
 	done; exit $$fail
+
+# Render the GitHub social preview card (upload it under Settings > General).
+social-preview:
+	"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu \
+		--hide-scrollbars --force-device-scale-factor=1 --window-size=1280,640 --virtual-time-budget=2000 \
+		--screenshot=$(CURDIR)/.github/social-preview.png file://$(CURDIR)/.github/social-preview.html 2>/dev/null
 
 clean:
 	rm -rf dist

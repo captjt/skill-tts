@@ -1,0 +1,123 @@
+<!doctype html>
+<!--
+  Source for .github/social-preview.png (GitHub social preview, 1280x640).
+  Regenerate with: make social-preview
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>skill-tts social preview</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --text: #f5f7fa;
+    --sub: #c9d1d9;
+    --muted: #8b98a9;
+    --panel: #111823;
+    --line: #223041;
+    --teal: #2dd4bf;
+    --blue: #60a5fa;
+    --violet: #a78bfa;
+    --sans: "SF Pro Display", -apple-system, "Helvetica Neue", Inter, sans-serif;
+    --mono: "SF Mono", Menlo, ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    position: relative;
+    background:
+      radial-gradient(700px 420px at 8% 0%, rgba(45, 212, 191, 0.16), transparent 70%),
+      radial-gradient(760px 480px at 100% 100%, rgba(167, 139, 250, 0.20), transparent 70%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .content { position: absolute; inset: 64px 80px 56px; display: flex; flex-direction: column; }
+  .title {
+    font-size: 112px; font-weight: 800; letter-spacing: -3px; line-height: 1;
+    background: linear-gradient(90deg, var(--text) 55%, #dbe7ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .subtitle { margin-top: 18px; font-size: 44px; font-weight: 600; letter-spacing: -0.5px; color: var(--text); }
+  .tagline { margin-top: 12px; font-size: 28px; font-weight: 400; color: var(--sub); }
+  .tagline b { font-weight: 600; color: var(--text); }
+  .chips { margin-top: 22px; display: flex; gap: 10px; }
+  .chip {
+    font-size: 19px; font-weight: 500; color: var(--sub);
+    padding: 7px 15px; border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line);
+  }
+  .wave { margin-top: 26px; height: 96px; }
+  .bottom { margin-top: auto; display: flex; align-items: center; justify-content: space-between; }
+  .install {
+    font-family: var(--mono); font-size: 27px; color: var(--text);
+    padding: 14px 24px; border-radius: 14px;
+    background: var(--panel); border: 1px solid var(--line);
+  }
+  .install .prompt { color: var(--teal); margin-right: 14px; }
+  .trust { font-size: 21px; color: var(--muted); text-align: right; line-height: 1.45; }
+  .trust b { color: var(--sub); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="content">
+    <div class="title">skill-tts</div>
+    <div class="subtitle">Text-to-speech for coding agents</div>
+    <div class="tagline"><b>Timed voiceovers</b> for product videos and read-aloud, in Claude Code &amp; other agents.</div>
+    <div class="chips">
+      <span class="chip">Kokoro</span><span class="chip">ElevenLabs</span><span class="chip">OpenAI</span>
+      <span class="chip">Gemini</span><span class="chip">Cartesia</span><span class="chip">Deepgram</span>
+      <span class="chip">System voice</span>
+    </div>
+    <svg class="wave" id="wave" width="1120" height="96" viewBox="0 0 1120 96" aria-hidden="true">
+      <defs>
+        <linearGradient id="g" x1="0" x2="1120" y1="0" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#2dd4bf"/>
+          <stop offset="0.5" stop-color="#60a5fa"/>
+          <stop offset="1" stop-color="#a78bfa"/>
+        </linearGradient>
+        <filter id="glow" x="-5%" y="-50%" width="110%" height="200%">
+          <feGaussianBlur stdDeviation="6" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <g id="bars" fill="url(#g)" filter="url(#glow)"></g>
+    </svg>
+    <div class="bottom">
+      <div class="install"><span class="prompt">$</span>npx skills add captjt/skill-tts</div>
+      <div class="trust"><b>Go</b> · single static binary<br>reproducible builds · sha256-verified</div>
+    </div>
+  </div>
+<script>
+  // A speech-like waveform: syllable bursts grouped into words, with pauses.
+  // Seeded so every render is identical.
+  let seed = 7;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const W = 1120, H = 96, bar = 6, gap = 4, n = Math.floor(W / (bar + gap));
+  const words = [];
+  for (let i = 0; i < n; ) {
+    const len = 5 + Math.floor(rand() * 9);
+    words.push([i, i + len]);
+    i += len + 1 + Math.floor(rand() * 3);
+  }
+  const g = document.getElementById("bars");
+  for (let i = 0; i < n; i++) {
+    const w = words.find(([a, b]) => i >= a && i < b);
+    let h = 4; // silence between words
+    if (w) {
+      const t = (i - w[0]) / (w[1] - w[0]);
+      const env = Math.sin(Math.PI * t) ** 0.7;
+      h = 8 + (H - 12) * env * (0.45 + 0.55 * rand());
+    }
+    const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    r.setAttribute("x", i * (bar + gap));
+    r.setAttribute("y", (H - h) / 2);
+    r.setAttribute("width", bar);
+    r.setAttribute("height", h);
+    r.setAttribute("rx", bar / 2);
+    g.appendChild(r);
+  }
+</script>
+</body>
+</html>
