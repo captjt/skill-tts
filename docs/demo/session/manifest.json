@@ -1,0 +1,41 @@
+{
+  "provider": "elevenlabs",
+  "sample_rate": 24000,
+  "channels": 1,
+  "duration": 9.476,
+  "segments": [
+    {
+      "id": "01-hook",
+      "file": "voiceover/01-hook.wav",
+      "duration": 1.647,
+      "start": 0,
+      "end": 1.647,
+      "text": "This narration was written by Claude.",
+      "voice": "cjVigY5qzO86Huf0OWal",
+      "model": "eleven_multilingual_v2",
+      "hash": "7c71393c05851307"
+    },
+    {
+      "id": "02-render",
+      "file": "voiceover/02-render.wav",
+      "duration": 4.434,
+      "start": 2.047,
+      "end": 6.482,
+      "text": "Then skill T-T-S turned it into a voiceover, timed scene by scene, captions included.",
+      "voice": "cjVigY5qzO86Huf0OWal",
+      "model": "eleven_multilingual_v2",
+      "hash": "889d04dc99606dd9"
+    },
+    {
+      "id": "03-cta",
+      "file": "voiceover/03-cta.wav",
+      "duration": 2.595,
+      "start": 6.882,
+      "end": 9.476,
+      "text": "Give Claude a voice. Skill T-T-S is out now.",
+      "voice": "cjVigY5qzO86Huf0OWal",
+      "model": "eleven_multilingual_v2",
+      "hash": "5879aa9e9091ba9d"
+    }
+  ]
+}

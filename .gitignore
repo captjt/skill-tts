@@ -1,2 +1,4 @@
 dist/
 .DS_Store
+docs/demo/.frames/
+docs/demo/.chrome-profile/

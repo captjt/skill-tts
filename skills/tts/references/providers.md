@@ -1,6 +1,6 @@
 # Provider reference
 
-> **Testing status:** `system` and `kokoro` have been tested live. `openai`, `elevenlabs`, `gemini`, `cartesia`, and `deepgram` were built from their API docs and unit-tested against fake servers, but have not yet been run against the real APIs. Expect possible request-format bugs, especially for Gemini.
+> **Testing status:** `system`, `kokoro`, and `elevenlabs` have been tested live. `openai`, `gemini`, `cartesia`, and `deepgram` were built from their API docs and unit-tested against fake servers, but have not yet been run against the real APIs. Expect possible request-format bugs, especially for Gemini.
 
 All providers stream 16-bit PCM straight to the speaker, so playback starts on the first bytes. `tts render` uses the high-fidelity model where a provider has one, and the live-speech model otherwise. Set per-provider defaults with `tts config set <provider>.<voice|model|speed|instructions|base_url> VALUE`.
 

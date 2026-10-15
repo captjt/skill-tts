@@ -1,0 +1,11 @@
+{
+  "provider": "elevenlabs",
+  "voice": "cjVigY5qzO86Huf0OWal",
+  "instructions": "upbeat, confident product launch narrator",
+  "pause": 0.4,
+  "segments": [
+    {"id": "01-hook",   "text": "This narration was written by Claude."},
+    {"id": "02-render", "text": "Then skill T-T-S turned it into a voiceover, timed scene by scene, captions included."},
+    {"id": "03-cta",    "text": "Give Claude a voice. Skill T-T-S is out now."}
+  ]
+}

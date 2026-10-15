@@ -11,7 +11,7 @@ TARGETS    := darwin-arm64 darwin-amd64 linux-arm64 linux-amd64
 LDFLAGS    := -s -w -buildid= -X main.version=$(VERSION)
 GOBUILD    := GOTOOLCHAIN=go$(GO_VERSION) CGO_ENABLED=0 go -C $(SRC) build -trimpath -buildvcs=false -mod=readonly -ldflags '$(LDFLAGS)'
 
-.PHONY: build test lint dist checksums pin verify-pins clean social-preview
+.PHONY: build test lint dist checksums pin verify-pins clean social-preview demo
 
 build: ## build for this machine into dist/tts
 	$(GOBUILD) -o $(CURDIR)/dist/tts .
@@ -52,6 +52,10 @@ verify-pins: checksums
 		if [ "$$want" = "$$got" ]; then echo "ok        tts-$$t $$got"; \
 		else echo "MISMATCH  tts-$$t pinned=$$want built=$$got"; fail=1; fi; \
 	done; exit $$fail
+
+# Rebuild the README demo video from docs/demo (needs Chrome, Node 22+, ffmpeg).
+demo:
+	node docs/demo/build.mjs
 
 # Render the GitHub social preview card (upload it under Settings > General).
 social-preview:

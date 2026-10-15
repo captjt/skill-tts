@@ -5,6 +5,10 @@ Text to speech for Claude Code and other coding agents. Voices come from the bui
 - **Voiceovers for videos:** `tts render` turns a scene-by-scene script into trimmed audio files, a combined track, and captions. It also writes a JSON manifest of exact durations and offsets that the rest of the pipeline (Remotion, ffmpeg, an editor) can time against. Re-runs only re-render the scenes you changed.
 - **Spoken output:** read a summary aloud, or announce when a long task finishes.
 
+<a href="docs/demo/demo.mp4"><img src="docs/demo/poster.png" alt="Demo: Claude writes a launch voiceover and renders it with ElevenLabs through skill-tts; the result plays with captions and a scene timeline from manifest.json" width="100%"></a>
+
+<sub>▶ <b>20-second demo, with sound.</b> A real Claude Code session, sped up: Claude writes a launch voiceover and renders it with ElevenLabs through this skill. Then the result plays, with captions from <code>voiceover.srt</code> and scene timing from <code>manifest.json</code>. The video itself is rendered from <a href="docs/demo">docs/demo</a>.</sub>
+
 What you get:
 - **Fast:** audio streams straight from the provider to CoreAudio (or PulseAudio/ALSA) in-process, so speech starts on the first bytes. The command returns as soon as audio is playing.
 - **Trustworthy:** a small Go binary that you can rebuild byte-for-byte from the source in this repo. It is checksum-verified before it ever runs, and it sends no telemetry. The default provider never leaves your machine.
@@ -94,12 +98,12 @@ tts doctor                                               # audio output, provide
 | `system` (default) | your machine, offline | none on macOS (`say`). On Linux: `apt install espeak-ng` | ✅ tested live |
 | `kokoro` | your machine | `docker run -d --name kokoro -p 8880:8880 ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0` | ✅ tested live |
 | `openai` | cloud | `OPENAI_API_KEY` | ⚠️ not yet tested live |
-| `elevenlabs` | cloud | `ELEVENLABS_API_KEY` | ⚠️ not yet tested live |
+| `elevenlabs` | cloud | `ELEVENLABS_API_KEY` | ✅ tested live |
 | `gemini` | cloud | `GEMINI_API_KEY` | ⚠️ not yet tested live |
 | `cartesia` | cloud | `CARTESIA_API_KEY` | ⚠️ not yet tested live |
 | `deepgram` | cloud | `DEEPGRAM_API_KEY` | ⚠️ not yet tested live |
 
-> **Testing status (v0.1.0).** `system` and `kokoro` have been run end to end: live playback, file output, and `tts render`. The cloud providers have **not yet been run against their live APIs**. Their request and response handling was written from each provider's API docs (October 2026) and is unit-tested against fake servers that mimic those docs. Real APIs can still differ in ways the docs don't show. Gemini is the most likely to need a fix, because its TTS recently moved to the new Interactions API. If one fails with an error about the request itself, such as an unknown field, a bad parameter, or an unexpected response, please [open an issue](https://github.com/captjt/skill-tts/issues) with the error text.
+> **Testing status.** `system`, `kokoro`, and `elevenlabs` have been run end to end: live playback, file output, and `tts render`. For ElevenLabs that includes voice listing, voice-name lookup, and both the flash and multilingual models; the demo above is real ElevenLabs output. The other cloud providers have **not yet been run against their live APIs**. Their request and response handling was written from each provider's API docs (October 2026) and is unit-tested against fake servers that mimic those docs. Real APIs can still differ in ways the docs don't show. Gemini is the most likely to need a fix, because its TTS recently moved to the new Interactions API. If one fails with an error about the request itself, such as an unknown field, a bad parameter, or an unexpected response, please [open an issue](https://github.com/captjt/skill-tts/issues) with the error text.
 
 Pick a default and its voice:
 

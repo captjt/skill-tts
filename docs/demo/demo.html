@@ -1,0 +1,295 @@
+<!doctype html>
+<!--
+  README demo for skill-tts. Every frame is a pure function of time: render(t).
+  build.mjs captures frames with headless Chrome and muxes the narration.
+  Preview with sound in a browser: open demo.html?play
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>skill-tts demo</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --text: #f5f7fa;
+    --sub: #c9d1d9;
+    --muted: #8b98a9;
+    --dim: #5b6778;
+    --panel: #0f151f;
+    --line: #223041;
+    --teal: #2dd4bf;
+    --blue: #60a5fa;
+    --violet: #a78bfa;
+    --green: #4ade80;
+    --orange: #f59e0b;
+    --sans: "SF Pro Display", -apple-system, "Helvetica Neue", Inter, sans-serif;
+    --mono: "SF Mono", Menlo, ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; }
+  body {
+    position: relative; color: var(--text); font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(760px 460px at 6% 0%, rgba(45, 212, 191, 0.13), transparent 70%),
+      radial-gradient(820px 520px at 100% 100%, rgba(167, 139, 250, 0.17), transparent 70%),
+      var(--bg);
+  }
+  .abs { position: absolute; }
+  .badge {
+    font-size: 15px; color: var(--muted); padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03);
+  }
+
+  /* Part A: terminal replay */
+  #term {
+    left: 110px; top: 54px; width: 1060px; height: 590px; border-radius: 14px;
+    background: rgba(13, 18, 26, 0.94); border: 1px solid var(--line);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55); overflow: hidden; transform-origin: 50% 50%;
+  }
+  #term .bar {
+    height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 16px;
+    border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, 0.02);
+  }
+  #term .dot { width: 12px; height: 12px; border-radius: 50%; }
+  #term .title { flex: 1; text-align: center; margin-right: 52px; font-size: 14px; color: var(--muted); font-family: var(--mono); }
+  #term .body { padding: 20px 30px; font-family: var(--mono); font-size: 17.5px; line-height: 1.5; color: var(--sub); white-space: pre; }
+  .ln { opacity: 0; }
+  .prompt { color: var(--text); white-space: pre-wrap; padding-left: 2ch; text-indent: -2ch; margin-bottom: 14px; }
+  .cont { color: var(--muted); }
+  .prompt .caret { color: var(--muted); }
+  .cursor { display: inline-block; width: 10px; height: 21px; background: var(--sub); vertical-align: -4px; margin-left: 1px; }
+  .tool .mark { color: var(--green); }
+  .tool .name { color: var(--text); font-weight: 600; }
+  .tool .args { color: var(--muted); }
+  .out { color: var(--muted); }
+  .out .hl { color: var(--sub); }
+  .say .mark { color: var(--text); }
+  .say { color: var(--text); white-space: pre-wrap; }
+  .spin { color: var(--orange); }
+  .row .id { color: var(--teal); }
+  .row .num { color: var(--text); }
+
+  /* Part B: the rendered result */
+  #result { inset: 0; opacity: 0; }
+  #file { left: 64px; top: 40px; font-family: var(--mono); font-size: 17px; color: var(--muted); }
+  #file .play { color: var(--teal); margin-right: 8px; }
+  #voice { right: 64px; top: 34px; }
+  .scene { left: 0; right: 0; top: 112px; height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; }
+  .h1 { font-size: 66px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.12; text-align: center; }
+  .grad { background: linear-gradient(90deg, var(--teal), var(--blue) 50%, var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .flow { display: flex; align-items: stretch; gap: 22px; }
+  .card {
+    width: 300px; padding: 22px 24px; border-radius: 16px; background: var(--panel);
+    border: 1px solid var(--line); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  }
+  .card .k { font-family: var(--mono); font-size: 15px; color: var(--muted); margin-bottom: 10px; }
+  .card .v { font-size: 25px; font-weight: 700; line-height: 1.25; }
+  .card .s { font-size: 17px; color: var(--sub); margin-top: 8px; line-height: 1.35; }
+  .arrow { font-size: 34px; color: var(--dim); align-self: center; }
+  .install {
+    font-family: var(--mono); font-size: 38px; padding: 20px 34px; border-radius: 18px;
+    background: var(--panel); border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+  }
+  .install .p { color: var(--teal); margin-right: 18px; }
+  .url { margin-top: 22px; font-size: 24px; color: var(--muted); }
+  #wave { left: 0; top: 428px; width: 1280px; height: 64px; }
+  #caption {
+    left: 140px; right: 140px; top: 512px; text-align: center; min-height: 48px;
+  }
+  #caption span {
+    display: inline-block; font-size: 27px; line-height: 1.35; padding: 7px 18px; border-radius: 10px;
+    background: rgba(0, 0, 0, 0.55); color: var(--text);
+  }
+  #timeline { left: 64px; right: 64px; top: 606px; height: 80px; }
+  #track { position: absolute; left: 0; right: 0; top: 30px; height: 12px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); }
+  .seg { position: absolute; top: 0; height: 12px; border-radius: 6px; }
+  .segl { position: absolute; top: 50px; font-family: var(--mono); font-size: 14.5px; color: var(--muted); white-space: nowrap; }
+  .segl b { color: var(--sub); font-weight: 600; }
+  #head { position: absolute; top: 20px; width: 2px; height: 32px; background: var(--text); border-radius: 1px; box-shadow: 0 0 10px rgba(255, 255, 255, 0.6); }
+  #clock { position: absolute; right: 0; top: 0; font-family: var(--mono); font-size: 15px; color: var(--muted); }
+  #tlabel { position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 15px; color: var(--muted); }
+  #note { right: 64px; bottom: 18px; font-size: 14px; color: var(--dim); }
+  #fade { inset: 0; background: var(--bg); opacity: 0; }
+</style>
+</head>
+<body>
+  <!-- Part A -->
+  <div id="term" class="abs">
+    <div class="bar">
+      <span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span>
+      <span class="title" id="ttitle"></span>
+    </div>
+    <div class="body" id="tbody"></div>
+  </div>
+  <div id="badgeA" class="abs badge" style="right:110px; top:658px;">Real Claude Code session · sped up &amp; condensed</div>
+
+  <!-- Part B -->
+  <div id="result" class="abs">
+    <div id="file" class="abs"><span class="play">▶</span><span id="fname"></span></div>
+    <div id="voice" class="abs badge"></div>
+    <div id="scenes"></div>
+    <svg id="wave" class="abs" viewBox="0 0 1280 64">
+      <defs>
+        <linearGradient id="wg" x1="0" x2="1280" y1="0" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0.2" stop-color="#2dd4bf"/><stop offset="0.5" stop-color="#60a5fa"/><stop offset="0.8" stop-color="#a78bfa"/>
+        </linearGradient>
+        <filter id="wglow" x="-5%" y="-60%" width="110%" height="220%">
+          <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <g id="bars" fill="url(#wg)" filter="url(#wglow)"></g>
+    </svg>
+    <div id="caption" class="abs"><span></span></div>
+    <div id="timeline" class="abs">
+      <div id="tlabel">manifest.json</div>
+      <div id="clock"></div>
+      <div id="track"></div>
+      <div id="head"></div>
+    </div>
+  </div>
+  <div id="fade" class="abs"></div>
+
+<script src="data.js"></script>
+<script>
+const D = window.DEMO;
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const ease = (x) => { x = clamp(x); return x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2; };
+const ramp = (t, start, dur) => ease((t - start) / dur);
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+// ---------- Part A: build terminal lines ----------
+$("ttitle").textContent = `claude — ${D.session.cwd}`;
+const body = $("tbody");
+const promptEl = document.createElement("div");
+promptEl.className = "prompt";
+body.appendChild(promptEl);
+const lines = D.session.steps.map((s) => {
+  const el = document.createElement("div");
+  el.className = "ln " + s.type;
+  if (s.type === "tool") el.innerHTML = `<span class="mark">⏺</span> <span class="name">${esc(s.name)}</span><span class="args">(${esc(s.args)})</span>`;
+  else if (s.type === "out") el.innerHTML = `  <span>⎿</span>  <span class="hl">${esc(s.text)}</span>`;
+  else if (s.type === "cont") el.innerHTML = `      <span class="hl">${esc(s.text)}</span>`;
+  else if (s.type === "say") el.innerHTML = `<span class="mark">⏺</span> ${esc(s.text)}`;
+  else if (s.type === "row") el.innerHTML = `    <span class="id">${esc(s.id.padEnd(12))}</span><span class="num">${esc(s.range.padEnd(16))}</span>${esc(s.dur)}`;
+  else if (s.type === "spin") el.innerHTML = `<span class="spin"></span> ${esc(s.text)}`;
+  else if (s.type === "gap") el.innerHTML = " ";
+  body.appendChild(el);
+  return { s, el };
+});
+
+// ---------- Part B: build scenes, waveform, timeline ----------
+const M = D.manifest, segs = M.segments, total = M.duration;
+$("fname").textContent = D.session.file;
+$("voice").textContent = D.voiceLabel;
+const sceneEls = segs.map((seg, i) => {
+  const el = document.createElement("div");
+  el.className = "scene abs";
+  el.innerHTML = (D.scenes[i] || `<div class="h1">${esc(seg.text)}</div>`);
+  $("scenes").appendChild(el);
+  return el;
+});
+const NB = 96, BW = 6, BG = 4, X0 = (1280 - NB * (BW + BG)) / 2;
+const bars = [];
+for (let i = 0; i < NB; i++) {
+  const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  r.setAttribute("x", X0 + i * (BW + BG)); r.setAttribute("width", BW); r.setAttribute("rx", BW / 2);
+  $("bars").appendChild(r); bars.push(r);
+}
+const colors = ["#2dd4bf", "#60a5fa", "#a78bfa", "#f472b6"];
+const trackW = 1280 - 128;
+segs.forEach((seg, i) => {
+  const s = document.createElement("div");
+  s.className = "seg";
+  s.style.left = `${(seg.start / total) * 100}%`;
+  s.style.width = `${(seg.duration / total) * 100}%`;
+  s.style.background = colors[i % colors.length];
+  s.style.opacity = "0.85";
+  $("track").appendChild(s);
+  const l = document.createElement("div");
+  l.className = "segl";
+  l.style.left = `${(seg.start / total) * trackW}px`;
+  l.innerHTML = `<b>${esc(seg.id)}</b> ${seg.duration.toFixed(3)}s`;
+  $("timeline").appendChild(l);
+});
+const fmt = (x) => { x = Math.max(0, x); return `${String(Math.floor(x / 60)).padStart(2, "0")}:${(x % 60).toFixed(1).padStart(4, "0")}`; };
+
+function render(t) {
+  const A = D.session, tB = D.partB;
+  // Part A
+  const typed = A.prompt.slice(0, Math.floor(clamp((t - A.typeStart) / A.typeDur) * A.prompt.length));
+  const blink = Math.floor(t * 2.2) % 2 === 0 || (t > A.typeStart && t < A.typeStart + A.typeDur);
+  const showCursor = t < A.typeStart + A.typeDur + 0.35;
+  promptEl.innerHTML = `<span class="caret">&gt;</span> ${esc(typed)}${showCursor && blink ? '<span class="cursor"></span>' : ""}`;
+  for (const { s, el } of lines) {
+    const k = ramp(t, s.at, 0.16);
+    const hide = s.until !== undefined && t >= s.until;
+    el.style.opacity = hide ? 0 : k;
+    el.style.display = hide || t < s.at ? "none" : "";
+    el.style.transform = `translateY(${(1 - k) * 6}px)`;
+    if (s.type === "spin") el.querySelector(".spin").textContent = "✻✶✳✢·✢✳✶"[Math.floor(t * 12) % 8];
+  }
+  const out = ramp(t, tB - 0.75, 0.6);
+  $("term").style.opacity = 1 - out;
+  $("term").style.transform = `scale(${1 - 0.06 * out}) translateY(${-14 * out}px)`;
+  $("term").style.display = out >= 1 ? "none" : "";
+  $("badgeA").style.opacity = ramp(t, 0.3, 0.4) * (1 - out);
+
+  // Part B
+  const inB = ramp(t, tB - 0.45, 0.5);
+  $("result").style.opacity = inB;
+  const ta = t - tB; // time within the narration
+  segs.forEach((seg, i) => {
+    const next = segs[i + 1];
+    const start = i === 0 ? -1 : seg.start - 0.2;
+    const end = next ? next.start - 0.2 : Infinity;
+    const vis = ramp(ta, start, 0.35) * (1 - ramp(ta, end, 0.3));
+    const el = sceneEls[i];
+    el.style.opacity = vis;
+    el.style.transform = `translateY(${(1 - ramp(ta, start, 0.45)) * 18}px)`;
+    el.querySelectorAll("[data-in]").forEach((x) => {
+      const k = ramp(ta, seg.start + parseFloat(x.dataset.in), 0.4);
+      x.style.opacity = k;
+      x.style.transform = `translateY(${(1 - k) * 14}px)`;
+    });
+  });
+  // Waveform: recent loudness scrolling right to left, from the real audio.
+  const f = Math.round(ta * D.fps);
+  bars.forEach((r, i) => {
+    const idx = f - (NB - 1 - i);
+    const v = idx >= 0 && idx < D.env.length ? D.env[idx] : 0;
+    const centerBoost = 0.55 + 0.45 * Math.sin((Math.PI * (i + 0.5)) / NB);
+    const h = 4 + 56 * v * centerBoost;
+    r.setAttribute("y", (64 - h) / 2); r.setAttribute("height", h);
+  });
+  const cue = D.cues.find((c) => ta >= c.start && ta < c.end + 0.05);
+  const cap = $("caption").firstChild;
+  cap.textContent = cue ? cue.text : "";
+  cap.style.visibility = cue ? "visible" : "hidden";
+  const p = clamp(ta / total);
+  $("head").style.left = `${p * trackW - 1}px`;
+  $("clock").textContent = `${fmt(Math.min(ta, total))} / ${fmt(total)}`;
+  $("fade").style.opacity = ramp(t, D.total - 0.5, 0.5);
+}
+window.render = render;
+
+// Live preview with sound: demo.html?play
+if (location.search.includes("play")) {
+  const audio = new Audio(D.audioSrc);
+  let t0 = null, started = false;
+  const loop = (now) => {
+    if (t0 === null) t0 = now;
+    const t = (now - t0) / 1000;
+    if (!started && t >= D.partB) { audio.play(); started = true; }
+    render(t);
+    if (t < D.total) requestAnimationFrame(loop);
+  };
+  document.body.addEventListener("click", () => requestAnimationFrame(loop), { once: true });
+  render(0);
+} else {
+  render(0);
+}
+</script>
+</body>
+</html>
