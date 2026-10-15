@@ -5,7 +5,7 @@ Text to speech for Claude Code and other coding agents. Voices come from the bui
 - **Voiceovers for videos:** `tts render` turns a scene-by-scene script into trimmed audio files, a combined track, and captions. It also writes a JSON manifest of exact durations and offsets that the rest of the pipeline (Remotion, ffmpeg, an editor) can time against. Re-runs only re-render the scenes you changed.
 - **Spoken output:** read a summary aloud, or announce when a long task finishes.
 
-<a href="docs/demo/demo.mp4"><img src="docs/demo/poster.png" alt="Demo: Claude writes a launch voiceover and renders it with ElevenLabs through skill-tts; the result plays with captions and a scene timeline from manifest.json" width="100%"></a>
+https://github.com/user-attachments/assets/684a49d6-4e0a-4a0c-a168-3924ec9969ae
 
 <sub>▶ <b>20-second demo, with sound.</b> A real Claude Code session, sped up: Claude writes a launch voiceover and renders it with ElevenLabs through this skill. Then the result plays, with captions from <code>voiceover.srt</code> and scene timing from <code>manifest.json</code>. The video itself is rendered from <a href="docs/demo">docs/demo</a>.</sub>
 
